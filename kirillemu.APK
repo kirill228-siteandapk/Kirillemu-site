@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Меню Эмуляторов</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: linear-gradient(135deg, #0f172a, #1e293b); min-height: 100vh; padding: 40px 20px; color: white; }
+        h1 { font-size: 24px; text-align: center; margin-bottom: 10px; }
+        .subtitle { text-align: center; color: #94a3b8; margin-bottom: 40px; }
+        .menu { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; max-width: 700px; margin: 0 auto; }
+        .card { background: linear-gradient(145deg, #1e293b, #334155); border-radius: 20px; padding: 25px 20px; cursor: pointer; border: 2px solid transparent; transition: all 0.3s; text-align: center; }
+        .card:hover { border-color: #38bdf8; }
+        .icon { font-size: 40px; margin-bottom: 10px; }
+        .name { font-size: 16px; font-weight: bold; }
+        .back-btn { position: fixed; top: 15px; left: 15px; padding: 8px 18px; background: #475569; border: none; border-radius: 20px; color: white; font-size: 15px; cursor: pointer; z-index: 100; }
+        .back-btn:hover { background: #64748b; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .selected-box { margin-top: 60px; padding: 30px; background: rgba(56,189,248,0.1); border-radius: 15px; border-left: 4px solid #38bdf8; max-width: 450px; margin-left: auto; margin-right: auto; text-align: center; }
+        .launch-btn { margin-top: 20px; padding: 12px 30px; background: #38bdf8; border: none; border-radius: 25px; color: white; font-size: 16px; cursor: pointer; }
+        .launch-btn:hover { background: #0ea5e9; }
+        .status { margin-top: 15px; font-size: 18px; color: #94a3b8; }
+        
+        .desktop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 200; padding: 15px; overflow: hidden; }
+        .desktop-icons { display: flex; flex-direction: column; gap: 20px; padding: 15px; }
+        .desk-icon { text-align: center; width: 90px; padding: 8px; cursor: pointer; }
+        .desk-icon:hover { background: rgba(255,255,255,0.1); }
+        .desk-icon span { font-size: 32px; display: block; margin-bottom: 4px; }
+        .desk-icon p { font-size: 11px; color: white; }
+        
+        .app-window { position: absolute; top: 60px; left: 120px; width: 350px; height: 200px; background: #ECE9D8; border: 2px outset white; z-index: 210; display: none; flex-direction: column; }
+        .app-window.show { display: flex; }
+        .app-titlebar { background: linear-gradient(180deg, #0058E4, #3A71D1); padding: 4px 8px; display: flex; justify-content: space-between; color: white; font-size: 12px; font-weight: bold; }
+        .app-close { background: #E04343; border: 2px outset #FF6666; color: white; width: 22px; height: 22px; cursor: pointer; }
+        .app-content { flex: 1; padding: 15px; color: #333; font-size: 14px; }
+        
+        .taskbar { position: absolute; bottom: 0; left: 0; right: 0; height: 40px; display: flex; align-items: center; padding: 0 8px; gap: 10px; }
+        .close-desk-btn { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; z-index: 10; }
+        
+        .xp-desk { background: #3A6EA5; }
+        .xp-desk .taskbar { background: linear-gradient(180deg, #3168E3, #1841B5); }
+        .xp-start { background: linear-gradient(180deg, #5FA057, #3C8C31); border: none; color: white; font-weight: bold; padding: 6px 15px; border-radius: 0 15px 15px 0; height: 100%; cursor: pointer; }
+        .xp-time { margin-left: auto; color: white; font-size: 12px; padding: 0 15px; }
+        
+        .win2k-desk { background: #005555; }
+        .win2k-desk .taskbar { background: #C0C0C0; border-top: 2px solid white; }
+        .win2k-start { background: #C0C0C0; border: 2px outset white; padding: 4px 12px; cursor: pointer; font-weight: bold; }
+        
+        .winme-desk { background: linear-gradient(135deg, #0055AA, #003366); }
+        .winme-desk .taskbar { background: #C0C0C0; border-top: 2px solid white; }
+        .winme-start { background: #C0C0C0; border: 2px outset white; padding: 4px 12px; cursor: pointer; font-weight: bold; }
+        
+        .android-desk { background: linear-gradient(180deg, #4CAF50, #2E7D32); color: white; }
+        .android-status { text-align: right; padding: 10px 20px; font-size: 14px; }
+        .android-nav { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); display: flex; gap: 25px; padding: 8px 20px; background: rgba(0,0,0,0.2); border-radius: 25px; }
+        
+        .iphone-desk { background: linear-gradient(180deg, #f2f2f7, #e5e5e7); color: #1d1d1f; }
+        .iphone-icons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 60px 30px; }
+        .iphone-icon { text-align: center; width: 70px; cursor: pointer; }
+        .iphone-icon span { font-size: 35px; }
+        .iphone-icon p { font-size: 11px; margin-top: 5px; }
+        .iphone-dock { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.05); border-radius: 20px; padding: 10px 15px; display: flex; gap: 18px; }
+    </style>
+</head>
+<body>
+
+    <div id="s1" class="screen active">
+        <h1>🎮 Выбери Платформу</h1>
+        <p class="subtitle">Кликни по карточке</p>
+        <div class="menu">
+            <div class="card" onclick="showScreen('s2')">
+                <div class="icon">📱</div>
+                <div class="name">Android</div>
+            </div>
+            <div class="card" onclick="showScreen('s3')">
+                <div class="icon">💻</div>
+                <div class="name">Windows</div>
+            </div>
+            <div class="card" onclick="showScreen('s4')">
+                <div class="icon">🍎</div>
+                <div class="name">Apple</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="s2" class="screen">
+        <button class="back-btn" onclick="showScreen('s1')">← Назад</button>
+        <h1>📱 Версии Android</h1>
+        <p class="subtitle">Нажми на нужную версию</p>
+        <div class="menu">
+            <div class="card" onclick="goConfirm('Android 7.0', 's2', 'androidDesktop')">
+                <div class="icon">7️⃣</div>
+                <div class="name">Android 7</div>
+            </div>
+            <div class="card" onclick="goConfirm('Android 12', 's2', 'androidDesktop')">
+                <div class="icon">🔟2️⃣</div>
+                <div class="name">Android 12</div>
+            </div>
+            <div class="card" onclick="goConfirm('Android 14', 's2', 'androidDesktop')">
+                <div class="icon">🔟4️⃣</div>
+                <div class="name">Android 14</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="s3" class="screen">
+        <button class="back-btn" onclick="showScreen('s1')">← Назад</button>
+        <h1>💻 Версии Windows</h1>
+        <p class="subtitle">Нажми на нужную систему</p>
+        <div class="menu">
+            <div class="card" onclick="goConfirm('Windows XP', 's3', 'xpDesktop')">
+                <div class="icon">🟢</div>
+                <div class="name">Windows XP</div>
+            </div>
+            <div class="card" onclick="goConfirm('Windows 2000', 's3', 'win2kDesktop')">
+                <div class="icon">🔵</div>
+                <div class="name">Windows 2000</div>
+            </div>
+            <div class="card" onclick="goConfirm('Windows ME', 's3', 'winmeDesktop')">
+                <div class="icon">🟡</div>
+                <div class="name">Windows ME</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="s4" class="screen">
+        <button class="back-btn" onclick="showScreen('s1')">← Назад</button>
+        <h1>🍎 Apple</h1>
+        <p class="subtitle">Нажми на устройство</p>
+        <div class="menu">
+            <div class="card" onclick="goConfirm('iPhone 2007', 's4', 'iphoneDesktop')">
+                <div class="icon">📞</div>
+                <div class="name">iPhone 1-го поколения</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="s5" class="screen">
+        <button class="back-btn" id="backFromConfirm">← Назад</button>
+        <div class="selected-box">
+            <h2 id="versionName"></h2>
+            <p class="status" id="loadStatus">Готов к запуску</p>
+            <button class="launch-btn" id="launchButton">🚀 Запустить</button>
+        </div>
+    </div>
+
+    <div id="xpDesktop" class="screen">
+        <div class="desktop xp-desk">
+            <button class="close-desk-btn" onclick="showScreen('s1')">✕ Выход</button>
+            <div class="desktop-icons">
+                <div class="desk-icon" onclick="openApp('xp-f1')"><span>💻</span><p>Мой компьютер</p></div>
+                <div class="desk-icon" onclick="openApp('xp-f2')"><span>📁</span><p>Документы</p></div>
+                <div class="desk-icon" onclick="openApp('xp-f3')"><span>📄</span><p>Блокнот</p></div>
+            </div>
+            <div id="xp-f1" class="app-window">
+                <div class="app-titlebar">Мой компьютер <button class="app-close" onclick="closeApp('xp-f1')">✕</button></div>
+                <div class="app-content">💻 Диск C: — 40 ГБ<br>Диск D: — 60 ГБ</div>
+            </div>
+            <div id="xp-f2" class="app-window">
+                <div class="app-titlebar">Документы <button class="app-close" onclick="closeApp('xp-f2')">✕</button></div>
+                <div class="app-content">📁 Папка пуста</div>
+            </div>
+            <div id="xp-f3" class="app-window">
+                <div class="app-titlebar">Блокнот <button class="app-close" onclick="closeApp('xp-f3')">✕</button></div>
+                <div class="app-content">Привет из Windows XP!</div>
+            </div>
+            <div class="taskbar"><button class="xp-start">🪟 Пуск</button><span class="xp-time">12:00</span></div>
+        </div>
+    </div>
+
+    <div id="win2kDesktop" class="screen">
+        <div class="desktop win2k-desk">
+            <button class="close-desk-btn" onclick="showScreen('s1')">✕ Выход</button>
+            <div class="desktop-icons">
+                <div class="desk-icon" onclick="openApp('2k-f1')"><span>💻</span><p>Мой компьютер</p></div>
+                <div class="desk-icon" onclick="openApp('2k-f2')"><span>📁</span><p>Документы</p></div>
+                <div class="desk-icon" onclick="openApp('2k-f3')"><span>❓</span><p>Справка</p></div>
+            </div>
+            <div id="2k-f1" class="app-window">
+                <div class="app-titlebar">Мой компьютер <button class="app-close" onclick="closeApp('2k-f1')">✕</button></div>
+                <div class="app-content">💻 Диск C:<br>Диск D:</div>
+            </div>
+            <div id="2k-f2" class="app-window">
+                <div class="app-titlebar">Документы <button class="app-close" onclick="closeApp('2k-f2')">✕</button></div>
+                <div class="app-content">📁 Папка пуста</div>
+            </div>
+            <div id="2k-f3" class="app-window">
+                <div class="app-titlebar">Справка <button class="app-close" onclick="closeApp('2k-f3')">✕</button></div>
+                <div class="app-content">❓ Система готова к работе</div>
+            </div>
+            <div class="taskbar"><button class="win2k-start">Пуск</button></div>
+        </div>
+    </div>
+
+    <div id="winmeDesktop" class="screen">
+        <div class="desktop winme-desk">
+            <button class="close-desk-btn" onclick="showScreen('s1')">✕ Выход</button>
+            <div class="desktop-icons">
+                <div class="desk-icon" onclick="openApp('me-f1')"><span>💻</span><p>Мой компьютер</p></div>
+                <div class="desk-icon" onclick="openApp('me-f2')"><span>📁</span><p>Документы</p></div>
+                <div class="desk-icon" onclick="openApp('me-f3')"><span>🎮</span><p>Игры</p></div>
+            </div>
+            <div id="me-f1" class="app-window">
+                <div class="app-titlebar">Мой компьютер <button class="app-close" onclick="closeApp('me-f1')">✕</button></div>
+                <div class="app-content">💻 Диск C:<br>Диск D:</div>
+            </div>
+            <div id="me-f2" class="app-window">
+                <div class="app-titlebar">Документы <button class="app-close" onclick="closeApp('me-f2')">✕</button></div>
+                <div class="app-content">📁 Папка пуста</div>
+            </div>
+            <div id="me-f3" class="app-window">
+                <div class="app-titlebar">Игры <button class="app-close" onclick="closeApp('me-f3')">✕</button></div>
+                <div class="app-content">🎮 Сапёр<br>♟️ Шахматы</div>
+            </div>
+            <div class="taskbar"><button class="winme-start">Пуск</button></div>
+        </div>
+    </div>
+
+    <div id="androidDesktop" class="screen">
+        <div class="desktop android-desk">
+            <button class="close-desk-btn" onclick="showScreen('s1')">✕ Выход</button>
+            <div class="android-status">12:00 📶 🔋</div>
+            <div class="desktop-icons">
+                <div class="desk-icon"><span>📁</span><p>Файлы</p></div>
+                <div class="desk-icon"><span>🌐</span><p>Браузер</p></div>
+                <div class="desk-icon"><span>⚙️</span><p>Настройки</p></div>
+            </div>
+            <div class="android-nav"><span>◀</span><span>◯</span><span>◧</span></div>
+        </div>
+    </div>
+
+    <div id="iphoneDesktop" class="screen">
+        <div class="desktop iphone-desk">
+            <button class="close-desk-btn" onclick="showScreen('s1')">✕ Выход</button>
+            <div class="iphone-icons">
+                <div class="iphone-icon"><span>📞</span><p>Телефон</p></div>
+                <div class="iphone-icon"><span>✉️</span><p>SMS</p></div>
+                <div class="iphone-icon"><span>🌐</span><p>Safari</p></div>
+                <div class="iphone-icon"><span>📷</span><p>Камера</p></div>
+            </div>
+            <div class="iphone-dock"><span>📞</span><span>🌐</span><span>🎵</span></div>
+        </div>
+    </div>
+
+<script>
+    let previousScreen = 's1';
+    let targetDesktop = '';
+
+    // Показать нужный экран
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    // Переход на экран подтверждения
+    function goConfirm(name, fromScreen, deskId) {
+        previousScreen = fromScreen;
+        targetDesktop = deskId;
+        document.getElementById('versionName').textContent = name;
+        showScreen('s5');
+    }
+
+    // Кнопка "Назад" на экране подтверждения
+    document.getElementById('backFromConfirm').onclick = function() {
+        showScreen(previousScreen);
+    };
+
+    // Кнопка "Запустить" — вот она, главная!
+    document.getElementById('launchButton').onclick = function() {
+        showScreen(targetDesktop);
+    };
+
+    // Открыть окно приложения
+    function openApp(id) {
+        var win = document.getElementById(id);
+        if (win) {
+            win.classList.add('show');
+        }
+    }
+
+    // Закрыть окно приложения
+    function closeApp(id) {
+        var win = document.getElementById(id);
+        if (win) {
+            win.classList.remove('show');
+        }
+    }
+</script>
+
+</body>
+</html>
